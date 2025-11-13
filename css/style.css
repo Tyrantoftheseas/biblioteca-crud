@@ -1,0 +1,41 @@
+/* Estilos del formulario */
+.book-form-card {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.9rem;
+}
+
+.book-form-card .card-header {
+  background: linear-gradient(180deg, #f8f9fa, #ffffff);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.book-form-card .card-footer {
+  background: #fafafa;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  border-color: #86b7fe;
+}
+
+/* Botón principal con un toque propio */
+#btnAgregar {
+  border-radius: 0.6rem;
+  font-weight: 600;
+}
+
+/* Estado de error más notorio */
+.was-validated .form-control:invalid,
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: block; /* Ayuda a que se vea con validación personalizada */
+}
+
+/* Alertas */
+.alert {
+  border-radius: 0.6rem;
+}
