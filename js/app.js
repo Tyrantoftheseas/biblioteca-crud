@@ -24,7 +24,7 @@ function setLibros(libros) {
 /* ========== MÓDULO: AGREGAR LIBRO ========== */
 
 (function () {
-  // Referencias a elementos del DOM
+  // Elementos del form
   const form = document.getElementById('formAgregarLibro');
   const alertPlaceholder = document.getElementById('alertPlaceholder');
   const inputTitulo = document.getElementById('titulo');
