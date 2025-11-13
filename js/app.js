@@ -110,6 +110,7 @@
     form.reset();
     form.classList.remove('was-validated');
   }
+  
   //Eliminar libros
 
   function eliminarLibro(idLibro) {
@@ -131,7 +132,7 @@
       resetModoEdicion();
     }
 
-    showAlert('Libro eliminado correctamente.', 'success');
+    showAlert('✅ Libro eliminado correctamente.', 'success');
     renderLibros();
   }
 
@@ -156,7 +157,7 @@
     }
 
     if (cantidad === 0) {
-      // Si no hay lirbos
+      // Si no hay libros
       sinLibrosMsg.style.display = 'block';
       tabla.style.display = 'none';
       return;
@@ -219,7 +220,6 @@
   function validarFormulario() {
     let valido = true;
 
-    // Quitar marcas previas
     [inputTitulo, inputAutor, inputIsbn, inputAnio].forEach((el) => {
       el.classList.remove('is-invalid');
     });
@@ -270,9 +270,16 @@
         disponible: !!chkDisponible.checked,
       };
 
+      // Evitar ISBN duplicado
+      if (libros.some((l) => l.isbn === nuevoLibro.isbn)) {
+        showAlert('⚠️ Ya existe un libro con ese ISBN.', 'warning');
+        inputIsbn.classList.add('is-invalid');
+        return;
+      }
+
       libros.push(nuevoLibro);
       setLibros(libros);
-      showAlert('Libro agregado correctamente.', 'success');
+      showAlert('✅ Libro agregado correctamente.', 'success');
       resetModoEdicion();
     } else {
       //MODO EDITAR
@@ -290,7 +297,7 @@
         libros[indice].disponible = !!chkDisponible.checked;
 
         setLibros(libros);
-        showAlert('Libro actualizado correctamente.', 'success');
+        showAlert('✅ Libro actualizado correctamente.', 'success');
       }
 
       resetModoEdicion();
