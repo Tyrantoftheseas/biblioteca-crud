@@ -93,12 +93,12 @@ function setLibros(libros) {
     try {
       const libros = getLibros();
 
-      // (Opcional) Evitar ISBN duplicado
-      // if (libros.some(l => l.isbn === nuevoLibro.isbn)) {
-      //   showAlert('Ya existe un libro con ese ISBN.', 'warning');
-      //   inputIsbn.classList.add('is-invalid');
-      //   return;
-      // }
+      // Evitar ISBN duplicado
+      if (libros.some((l) => l.isbn === nuevoLibro.isbn)) {
+        showAlert('Ya existe un libro con ese ISBN.', 'warning');
+        inputIsbn.classList.add('is-invalid');
+        return;
+      }
 
       libros.push(nuevoLibro);
       setLibros(libros);
