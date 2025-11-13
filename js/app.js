@@ -110,6 +110,30 @@
     form.reset();
     form.classList.remove('was-validated');
   }
+  //Eliminar libros
+
+  function eliminarLibro(idLibro) {
+    const confirmar = confirm('¿Seguro que deseas eliminar este libro?');
+
+    if (!confirmar) {
+      return;
+    }
+
+    const libros = getLibros();
+
+    // Filtrar el libro que no coincide con el id
+    const nuevosLibros = libros.filter((l) => String(l.id) !== String(idLibro));
+
+    setLibros(nuevosLibros);
+
+    // Si el libro que se elimina estaba en modo edición, resetear
+    if (String(libroEditandoId) === String(idLibro)) {
+      resetModoEdicion();
+    }
+
+    showAlert('Libro eliminado correctamente.', 'success');
+    renderLibros();
+  }
 
   //Mostrar libros
 
@@ -156,20 +180,34 @@
       tr.appendChild(tdEstado);
 
       const tdAcciones = document.createElement('td');
+
+      // Botón Editar
       const btnEditar = document.createElement('button');
-      btnEditar.className = 'btn btn-sm btn-warning btn-editar';
+      btnEditar.className = 'btn btn-sm btn-warning me-2';
       btnEditar.textContent = 'Editar';
 
-      // Guardae el id en una propiedad para usarlo en el evento
+      // Guardar el id en una propiedad para usarlo en el evento
       btnEditar.dataset.id = String(libro.id);
 
-      // Evento click: cargar datos en el formulario
       btnEditar.addEventListener('click', function () {
         const id = this.dataset.id; // Mantener como string
         cargarLibroEnFormulario(id);
       });
 
+      // Botón Eliminar
+      const btnEliminar = document.createElement('button');
+      btnEliminar.className = 'btn btn-sm btn-danger';
+      btnEliminar.textContent = 'Eliminar';
+
+      btnEliminar.dataset.id = String(libro.id);
+
+      btnEliminar.addEventListener('click', function () {
+        const id = this.dataset.id; // Mantener como string
+        eliminarLibro(id);
+      });
+
       tdAcciones.appendChild(btnEditar);
+      tdAcciones.appendChild(btnEliminar);
       tr.appendChild(tdAcciones);
 
       tbody.appendChild(tr);
