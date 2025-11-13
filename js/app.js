@@ -1,27 +1,5 @@
-/* ========== FUNCIONES COMPARTIDAS ========== */
-
-// Leer libros guardados
-function getLibros() {
-  try {
-    const data = localStorage.getItem('libros');
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error('No se pudo leer localStorage:', e);
-    return [];
-  }
-}
-
-// Guardar libros
-function setLibros(libros) {
-  try {
-    localStorage.setItem('libros', JSON.stringify(libros));
-  } catch (e) {
-    console.error('No se pudo guardar en localStorage:', e);
-    throw e;
-  }
-}
-
-/* ========== MÓDULO: AGREGAR LIBRO ========== */
+// Sistema CRUD de Biblioteca
+// Agregar, listar y editar libros
 
 (function () {
   // Elementos del form
@@ -32,8 +10,42 @@ function setLibros(libros) {
   const inputIsbn = document.getElementById('isbn');
   const inputAnio = document.getElementById('anio');
   const chkDisponible = document.getElementById('disponible');
+  const btnAgregar = document.getElementById('btnAgregar');
 
-  // Mostrar mensaje
+  // Elementos de la tabla
+  const tabla = document.getElementById('tablaLibros');
+  const tbody = document.getElementById('tablaLibrosBody');
+  const sinLibrosMsg = document.getElementById('sinLibrosMsg');
+  const contadorLibros = document.getElementById('contadorLibros');
+
+  // id del libro que se edita
+  let libroEditandoId = null;
+
+  //Funciones del localStorage
+
+  // Leer libros
+  function getLibros() {
+    try {
+      const data = localStorage.getItem('libros');
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('No se pudo leer localStorage:', e);
+      return [];
+    }
+  }
+
+  // Guardar libros
+  function setLibros(libros) {
+    try {
+      localStorage.setItem('libros', JSON.stringify(libros));
+    } catch (e) {
+      console.error('No se pudo guardar en localStorage:', e);
+      throw e;
+    }
+  }
+
+  //Funciones visuales
+
   function showAlert(message, type = 'success') {
     alertPlaceholder.innerHTML = `
       <div class="alert alert-${type} alert-dismissible fade show" role="alert">
@@ -42,9 +54,134 @@ function setLibros(libros) {
       </div>`;
   }
 
-  // Validar campos
+  function crearCelda(texto) {
+    const td = document.createElement('td');
+    td.textContent = texto;
+    return td;
+  }
+
+  function crearBadgeEstado(disponible) {
+    const span = document.createElement('span');
+    span.classList.add('badge', 'badge-estado');
+    if (disponible) {
+      span.classList.add('bg-success', 'text-white');
+      span.textContent = 'Disponible';
+    } else {
+      span.classList.add('bg-secondary', 'text-white');
+      span.textContent = 'No disponible';
+    }
+    return span;
+  }
+
+  //Modo edicion
+
+  function cargarLibroEnFormulario(idLibro) {
+    const libros = getLibros();
+    // Comparar como string para compatibilidad
+    const libro = libros.find((l) => String(l.id) === String(idLibro));
+
+    if (!libro) {
+      showAlert('No se encontró el libro a editar.', 'danger');
+      return;
+    }
+
+    // Cargar valores en los inputs
+    inputTitulo.value = libro.titulo ?? '';
+    inputAutor.value = libro.autor ?? '';
+    inputIsbn.value = libro.isbn ?? '';
+    inputAnio.value = libro.anio ?? '';
+    chkDisponible.checked = !!libro.disponible;
+
+    // Marcar qué libro estamos editando
+    libroEditandoId = idLibro;
+
+    btnAgregar.textContent = 'Actualizar Libro';
+    btnAgregar.classList.remove('btn-primary');
+    btnAgregar.classList.add('btn-success');
+
+    form.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function resetModoEdicion() {
+    libroEditandoId = null;
+    btnAgregar.textContent = 'Agregar Libro';
+    btnAgregar.classList.remove('btn-success');
+    btnAgregar.classList.add('btn-primary');
+    form.reset();
+    form.classList.remove('was-validated');
+  }
+
+  //Mostrar libros
+
+  function renderLibros() {
+    if (!tabla || !tbody || !sinLibrosMsg) {
+      console.warn('Elementos del listado no encontrados en el DOM.');
+      return;
+    }
+
+    // Limpiar tabla
+    tbody.innerHTML = '';
+
+    const libros = getLibros();
+    const cantidad = libros.length;
+
+    if (contadorLibros) {
+      contadorLibros.textContent = `${cantidad} ${
+        cantidad === 1 ? 'libro' : 'libros'
+      }`;
+    }
+
+    if (cantidad === 0) {
+      // Si no hay lirbos
+      sinLibrosMsg.style.display = 'block';
+      tabla.style.display = 'none';
+      return;
+    }
+
+    // Si hay libros
+    sinLibrosMsg.style.display = 'none';
+    tabla.style.display = 'table';
+
+    // Crear filas
+    libros.forEach((libro) => {
+      const tr = document.createElement('tr');
+
+      tr.appendChild(crearCelda(libro.titulo ?? '—'));
+      tr.appendChild(crearCelda(libro.autor ?? '—'));
+      tr.appendChild(crearCelda(libro.isbn ?? '—'));
+      tr.appendChild(crearCelda(libro.anio ?? '—'));
+
+      const tdEstado = document.createElement('td');
+      tdEstado.appendChild(crearBadgeEstado(!!libro.disponible));
+      tr.appendChild(tdEstado);
+
+      const tdAcciones = document.createElement('td');
+      const btnEditar = document.createElement('button');
+      btnEditar.className = 'btn btn-sm btn-warning btn-editar';
+      btnEditar.textContent = 'Editar';
+
+      // Guardae el id en una propiedad para usarlo en el evento
+      btnEditar.dataset.id = String(libro.id);
+
+      // Evento click: cargar datos en el formulario
+      btnEditar.addEventListener('click', function () {
+        const id = this.dataset.id; // Mantener como string
+        cargarLibroEnFormulario(id);
+      });
+
+      tdAcciones.appendChild(btnEditar);
+      tr.appendChild(tdAcciones);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  //Validar form
+
   function validarFormulario() {
     let valido = true;
+
+    // Quitar marcas previas
     [inputTitulo, inputAutor, inputIsbn, inputAnio].forEach((el) => {
       el.classList.remove('is-invalid');
     });
@@ -69,7 +206,8 @@ function setLibros(libros) {
     return valido;
   }
 
-  // Cuando se envía el form
+  //Enviar form
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -81,115 +219,48 @@ function setLibros(libros) {
       return;
     }
 
-    const nuevoLibro = {
-      id: 'libro_' + Date.now(),
-      titulo: inputTitulo.value.trim(),
-      autor: inputAutor.value.trim(),
-      isbn: inputIsbn.value.trim(),
-      anio: inputAnio.value.trim(),
-      disponible: !!chkDisponible.checked,
-    };
+    const libros = getLibros();
 
-    try {
-      const libros = getLibros();
-
-      // (Opcional) Evitar ISBN duplicado
-      // if (libros.some(l => l.isbn === nuevoLibro.isbn)) {
-      //   showAlert('Ya existe un libro con ese ISBN.', 'warning');
-      //   inputIsbn.classList.add('is-invalid');
-      //   return;
-      // }
+    if (libroEditandoId === null) {
+      //MODO AGREGAR
+      const nuevoLibro = {
+        id: 'libro_' + Date.now(),
+        titulo: inputTitulo.value.trim(),
+        autor: inputAutor.value.trim(),
+        isbn: inputIsbn.value.trim(),
+        anio: inputAnio.value.trim(),
+        disponible: !!chkDisponible.checked,
+      };
 
       libros.push(nuevoLibro);
       setLibros(libros);
-      renderLibros(); // Actualizar la lista
-      showAlert('✅ Libro agregado correctamente.', 'success');
-      form.reset();
-      form.classList.remove('was-validated');
-      inputTitulo.focus();
-    } catch (err) {
-      showAlert(
-        'Ocurrió un error guardando el libro. Revisa la consola.',
-        'danger'
+      showAlert('Libro agregado correctamente.', 'success');
+      resetModoEdicion();
+    } else {
+      //MODO EDITAR
+      const indice = libros.findIndex(
+        (l) => String(l.id) === String(libroEditandoId)
       );
-      console.error(err);
+
+      if (indice === -1) {
+        showAlert('No se pudo actualizar el libro (no encontrado).', 'danger');
+      } else {
+        libros[indice].titulo = inputTitulo.value.trim();
+        libros[indice].autor = inputAutor.value.trim();
+        libros[indice].isbn = inputIsbn.value.trim();
+        libros[indice].anio = inputAnio.value.trim();
+        libros[indice].disponible = !!chkDisponible.checked;
+
+        setLibros(libros);
+        showAlert('Libro actualizado correctamente.', 'success');
+      }
+
+      resetModoEdicion();
     }
+
+    renderLibros();
   });
+
+  //Iniciar
+  document.addEventListener('DOMContentLoaded', renderLibros);
 })();
-
-/* ========== MÓDULO: LISTADO DE LIBROS ========== */
-
-// Crear celda de tabla
-function crearCelda(texto) {
-  const td = document.createElement('td');
-  td.textContent = texto;
-  return td;
-}
-
-// Crear badge de estado
-function crearBadgeEstado(disponible) {
-  const span = document.createElement('span');
-  span.classList.add('badge', 'badge-estado');
-  if (disponible) {
-    span.classList.add('bg-success', 'text-white');
-    span.textContent = 'Disponible';
-  } else {
-    span.classList.add('bg-secondary', 'text-white');
-    span.textContent = 'No disponible';
-  }
-  return span;
-}
-
-// Mostrar los libros
-function renderLibros() {
-  const tabla = document.getElementById('tablaLibros');
-  const tbody = document.getElementById('tablaLibrosBody');
-  const sinLibrosMsg = document.getElementById('sinLibrosMsg');
-  const contadorLibros = document.getElementById('contadorLibros');
-
-  if (!tabla || !tbody || !sinLibrosMsg) {
-    console.warn('Elementos del listado no encontrados en el DOM.');
-    return;
-  }
-
-  // Limpiar tabla
-  tbody.innerHTML = '';
-
-  const libros = getLibros();
-  const cantidad = libros.length;
-
-  if (contadorLibros) {
-    contadorLibros.textContent = `${cantidad} ${
-      cantidad === 1 ? 'libro' : 'libros'
-    }`;
-  }
-
-  // Si no hay libros
-  if (cantidad === 0) {
-    sinLibrosMsg.style.display = 'block';
-    tabla.style.display = 'none';
-    return;
-  }
-
-  // Si hay libros
-  sinLibrosMsg.style.display = 'none';
-  tabla.style.display = 'table';
-
-  // Crear filas
-  libros.forEach((libro) => {
-    const tr = document.createElement('tr');
-    tr.appendChild(crearCelda(libro.titulo ?? '—'));
-    tr.appendChild(crearCelda(libro.autor ?? '—'));
-    tr.appendChild(crearCelda(libro.isbn ?? '—'));
-    tr.appendChild(crearCelda(libro.anio ?? '—'));
-
-    const tdEstado = document.createElement('td');
-    tdEstado.appendChild(crearBadgeEstado(!!libro.disponible));
-    tr.appendChild(tdEstado);
-
-    tbody.appendChild(tr);
-  });
-}
-
-// Cargar al iniciar
-document.addEventListener('DOMContentLoaded', renderLibros);
